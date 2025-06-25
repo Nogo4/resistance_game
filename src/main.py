@@ -1,5 +1,7 @@
 import discord
 import asyncio
+import random
+import math
 from utils import get_token, is_private_message
 from game import Player, RoleList
 from discord.ext import commands
@@ -39,6 +41,7 @@ class Game:
             current_players.append(user_id)
             return True
         return False
+
     async def init_game(self):
         guild = self.guild
         overwrites = {
@@ -57,6 +60,39 @@ class Game:
         self.channel = await guild.create_text_channel("resistance-game-" + str(creator_name), overwrites=overwrites)
         self.message = await self.channel.send(message)
         self.status = GameStatus.IN_PROGRESS
+        self.game_in_progress()
+
+    def game_in_progress(self):
+        self.init_roles()
+
+    def init_roles(self):
+        nb_spy = math.floor(len(self.players) / 3)
+        for spy in range(nb_spy):
+            player = random.choice(self.players)
+            player.role = RoleList.SPY
+
+@bot.tree.command(name="role")
+async def role_command(interaction: discord.Interaction):
+    if interaction.user.id not in current_players:
+        await interaction.response.send_message("You are not playing", ephemeral=True)
+    self = None
+    for game in current_games:
+        for player in game.players:
+            if player.user_id == interaction.user.id:
+                self = game
+                break
+    if self is None:
+        print("coucou")
+        return
+    for player in self.players:
+        if player.user_id == interaction.user.id:
+            user_role = player.role
+            break
+    if user_role == RoleList.SPY:
+        message = "You are a Spy :detective:"
+    else:
+        message = "You are a Resistant :shield:"
+    await interaction.response.send_message(message, ephemeral=True)
 
 @bot.event
 async def on_message(message):
@@ -96,12 +132,15 @@ async def play_resistance(ctx):
             else:
                 await ctx.send("❌ Nobody want play.")
             return
-
     await ctx.send("❌ La réaction 👍 n'a pas été trouvée.")
 
+@bot.event
+async def on_ready():
+    await bot.tree.sync()
 
 if __name__ == "__main__":
     token = get_token("token.txt")
+
     if token is None:
         print("Token not found. Please create a token.txt file with your bot token.")
         exit(1)
