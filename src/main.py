@@ -1,7 +1,8 @@
 import discord
 import asyncio
+from utils import get_token, is_private_message
+from game import Player, RoleList
 from discord.ext import commands
-from utils.get_token import read_token_file as get_token
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -13,18 +14,10 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 current_games = []
 current_players = []
 
-class RoleList:
-    SPY = "Spy"
-    RESISTANT = "Resistant"
-
 class GameStatus:
     WAITING_FOR_PLAYERS = 1
     IN_PROGRESS = 2
     FINISHED = 3
-
-class Player:
-    def __init__(self, user_id):
-        self.user_id = user_id
 
 class Game:
     def __init__(self):
@@ -60,23 +53,10 @@ class Game:
             user = guild.get_member(player.user_id)
             if user:
                 message += f"- <@{user.id}>\n"
-        self.channel = await guild.create_text_channel("resistance-game" + str(self.creator), overwrites=overwrites)
+        creator_name = guild.get_member(self.creator).name
+        self.channel = await guild.create_text_channel("resistance-game-" + str(creator_name), overwrites=overwrites)
         self.message = await self.channel.send(message)
-
-async def is_private_message(message: discord.Message) -> bool:
-    if isinstance(message.channel, discord.DMChannel):
-        if message.content == "!help":
-            await message.channel.send(
-                "This bot is in development, please wait for the next update."
-            )
-            return True
-        else:
-            await message.channel.send(
-                f"Hey <@{message.author.id}>, I'm a bot to play The Resistance Game.\n"
-                "Use the !help command in private messages to see how to play."
-            )
-        return True
-    return False
+        self.status = GameStatus.IN_PROGRESS
 
 @bot.event
 async def on_message(message):
@@ -112,6 +92,7 @@ async def play_resistance(ctx):
                 await ctx.send(message)
                 new_game.guild = ctx.guild
                 current_games.append(new_game)
+                await new_game.init_game()
             else:
                 await ctx.send("❌ Nobody want play.")
             return
