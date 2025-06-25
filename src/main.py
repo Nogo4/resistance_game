@@ -3,8 +3,6 @@ import asyncio
 from discord.ext import commands
 from utils.get_token import read_token_file as get_token
 
-token = "MTM4NzEyMzExMDQzNTg4NTExOA.GnxKpS.zS7cQVe81TCawHfTYfz0zOOXHMmfIqiw4XNRj8"
-
 intents = discord.Intents.default()
 intents.message_content = True
 intents.reactions = True
@@ -74,20 +72,23 @@ async def play_resistance(ctx):
     await asyncio.sleep(10)
 
     message = await ctx.channel.fetch_message(message.id)
-
+    new_game = Game()
     for reaction in message.reactions:
         if str(reaction.emoji) == "👍":
             users = [user async for user in reaction.users()]
-            voters = [user.id for user in users if not user.bot]
 
             for user in users:
                 if not user.bot:
-                    game.add_player(user.id)
+                    new_game.add_player(user.id)
 
-            if voters:
-                await ctx.send(f"🗳️ Players list : {', <@'.join(voters)} + '>'")
+            if new_game.players:
+                message = f"🗳️Players list : \n"
+                for player in new_game.players:
+                    message += f"- <@{player.user_id}>\n"
+                await ctx.send(message)
+                current_games.append(new_game)
             else:
-                await ctx.send("❌ Personne n'a voté.")
+                await ctx.send("❌ Nobody want play.")
             return
 
     await ctx.send("❌ La réaction 👍 n'a pas été trouvée.")
