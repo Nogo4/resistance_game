@@ -66,7 +66,7 @@ class Game:
         self.init_roles()
 
     def init_roles(self):
-        nb_spy = math.floor(len(self.players) / 3)
+        nb_spy = math.ceil(len(self.players) / 3)
         for spy in range(nb_spy):
             player = random.choice(self.players)
             player.role = RoleList.SPY
