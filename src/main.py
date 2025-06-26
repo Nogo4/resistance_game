@@ -82,7 +82,6 @@ async def role_command(interaction: discord.Interaction):
                 self = game
                 break
     if self is None:
-        print("coucou")
         return
     for player in self.players:
         if player.user_id == interaction.user.id:
