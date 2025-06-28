@@ -50,7 +50,15 @@ def need_two_fails(nb_player: int, round: int):
         return True
     return False
 
-def get_mission_ctx(nb_player: int, round: int):
+def get_team_leader_index(players_list: list, current_leader: int):
+    index = current_leader + 1
+    if index >= len(players_list):
+        index = 0
+    return index
+
+
+def get_mission_ctx(nb_player: int, round: int, players_list: list, current_leader: int):
     nb_player_on_mission = get_nb_player_on_mission(nb_player, round)
     need_two_fails_on_mission = need_two_fails(nb_player, round)
-    return [nb_player_on_mission, need_two_fails_on_mission]
+    new_leader_index = get_team_leader_index(players_list, current_leader)
+    return [nb_player_on_mission, need_two_fails_on_mission, new_leader_index]
