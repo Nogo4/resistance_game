@@ -2,8 +2,8 @@ import discord
 import asyncio
 import random
 import math
-from utils import get_token, is_private_message
-from game import Player, RoleList, get_mission_ctx
+from utils import get_token, is_private_message, get_user_ig
+from game import Player, RoleList, get_mission_ctx, current_games, current_players
 from discord.ext import commands
 
 intents = discord.Intents.default()
@@ -13,8 +13,6 @@ intents.guilds = True
 intents.members = True
 
 bot = commands.Bot(command_prefix="!", intents=intents)
-current_games = []
-current_players = []
 
 class GameStatus:
     WAITING_FOR_PLAYERS = 1
@@ -27,6 +25,13 @@ class Game:
         self.players = []
         self.status = GameStatus.WAITING_FOR_PLAYERS
         self.round = 1
+        self.nb_fails = 0
+        self.nb_success = 0
+        self.current_leader = 0
+        self.channel = None
+        self.team_vote_moment = False
+        self.waiting_vote = False
+        self.mission_vote_moment = False
         self.nb_player_on_mission = 0
         self.need_two_fails_on_mission = False
         self.guild = None
@@ -60,17 +65,39 @@ class Game:
                 message += f"- <@{user.id}>\n"
         creator_name = guild.get_member(self.creator).name
         self.channel = await guild.create_text_channel("resistance-game-" + str(creator_name), overwrites=overwrites)
-        self.message = await self.channel.send(message)
+        await self.channel.send(message)
         self.status = GameStatus.IN_PROGRESS
-        self.game_in_progress()
+        await self.game_in_progress()
+
+    def end_of_round(self):
+        self.players[self.current_leader].is_team_leader = False
+        self.team_vote_moment = False
+        self.waiting_vote = False
+        self.mission_vote_moment = False
 
     async def procede_round(self):
-        mission_ctx = get_mission_ctx(len(self.players), self.round)
+        mission_ctx = get_mission_ctx(len(self.players), self.round, self.players, self.current_leader)
         self.nb_player_on_mission = mission_ctx[0]
         self.need_two_fails_on_mission = mission_ctx[1]
+        self.current_leader = mission_ctx[2]
+        self.players[self.current_leader].is_team_leader = True
+        team_leader = self.players[self.current_leader]
+        message = f"Round {self.round}:\nThe Team leader is <@{team_leader.user_id}>\nThe Team leader must create a team of {self.nb_player_on_mission} members.\n"
 
-    def game_in_progress(self):
+        if self.need_two_fails_on_mission:
+            message += "Two fails are needed on this mission for spys :detective:.\n"
+        else:
+            message += "One fail is needed on this mission for spys :detective:.\n"
+        await self.channel.send(message)
+        self.team_vote_moment = True
+        self.waiting_vote = True
+        self.end_of_round()
+
+    async def game_in_progress(self):
         self.init_roles()
+        while self.round <= 5 and self.nb_fails < 3 and self.nb_success < 3:
+            await self.procede_round()
+            self.round += 1
 
     def init_roles(self):
         nb_spy = math.ceil(len(self.players) / 3)
@@ -80,20 +107,11 @@ class Game:
 
 @bot.tree.command(name="role")
 async def role_command(interaction: discord.Interaction):
-    if interaction.user.id not in current_players:
+    user_ig = get_user_ig(interaction.user.id)
+    if user_ig is None:
         await interaction.response.send_message("You are not playing", ephemeral=True)
-    self = None
-    for game in current_games:
-        for player in game.players:
-            if player.user_id == interaction.user.id:
-                self = game
-                break
-    if self is None:
         return
-    for player in self.players:
-        if player.user_id == interaction.user.id:
-            user_role = player.role
-            break
+    user_role = user_ig.role
     if user_role == RoleList.SPY:
         message = "You are a Spy :detective:"
     else:
