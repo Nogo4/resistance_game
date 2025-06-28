@@ -3,7 +3,7 @@ import asyncio
 import random
 import math
 from utils import get_token, is_private_message
-from game import Player, RoleList
+from game import Player, RoleList, get_mission_ctx
 from discord.ext import commands
 
 intents = discord.Intents.default()
@@ -26,7 +26,9 @@ class Game:
         self.creator = None
         self.players = []
         self.status = GameStatus.WAITING_FOR_PLAYERS
-        self.round = 0
+        self.round = 1
+        self.nb_player_on_mission = 0
+        self.need_two_fails_on_mission = False
         self.guild = None
 
     async def add_player(self, user_id):
@@ -61,6 +63,11 @@ class Game:
         self.message = await self.channel.send(message)
         self.status = GameStatus.IN_PROGRESS
         self.game_in_progress()
+
+    async def procede_round(self):
+        mission_ctx = get_mission_ctx(len(self.players), self.round)
+        self.nb_player_on_mission = mission_ctx[0]
+        self.need_two_fails_on_mission = mission_ctx[1]
 
     def game_in_progress(self):
         self.init_roles()
