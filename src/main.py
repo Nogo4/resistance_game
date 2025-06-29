@@ -2,7 +2,7 @@ import discord
 import asyncio
 import random
 import math
-from utils import get_token, is_private_message, get_user_ig
+from utils import get_token, is_private_message, get_user_ig, create_poll
 from game import Player, RoleList, get_mission_ctx, current_games, current_players
 from discord.ext import commands
 
@@ -28,6 +28,7 @@ class Game:
         self.nb_fails = 0
         self.nb_success = 0
         self.current_leader = 0
+        self.nb_refused_teams = 0
         self.channel = None
         self.team_vote_moment = False
         self.waiting_vote = False
@@ -69,18 +70,20 @@ class Game:
         self.status = GameStatus.IN_PROGRESS
         await self.game_in_progress()
 
-    def end_of_round(self):
+    def end_of_round(self, reset_team_vote: bool):
         self.players[self.current_leader].is_team_leader = False
         self.team_vote_moment = False
         self.waiting_vote = False
         self.mission_vote_moment = False
+        if reset_team_vote:
+            self.nb_refused_teams = 0
 
     async def procede_round(self):
         mission_ctx = get_mission_ctx(len(self.players), self.round, self.players, self.current_leader)
         self.nb_player_on_mission = mission_ctx[0]
         self.need_two_fails_on_mission = mission_ctx[1]
         self.current_leader = mission_ctx[2]
-        self.players[self.current_leader].is_team_leader = True
+        self.players[self.current_leader].teamleader = True
         team_leader = self.players[self.current_leader]
         message = f"Round {self.round}:\nThe Team leader is <@{team_leader.user_id}>\nThe Team leader must create a team of {self.nb_player_on_mission} members.\n"
 
@@ -91,7 +94,12 @@ class Game:
         await self.channel.send(message)
         self.team_vote_moment = True
         self.waiting_vote = True
-        self.end_of_round()
+        while self.waiting_vote and self.nb_refused_teams < 5:
+            await asyncio.sleep(1)
+        if self.nb_refused_teams >= 5:
+            self.end_of_round(False)
+        else:
+            self.end_of_round(True)
 
     async def game_in_progress(self):
         self.init_roles()
@@ -104,6 +112,63 @@ class Game:
         for spy in range(nb_spy):
             player = random.choice(self.players)
             player.role = RoleList.SPY
+
+def get_user_game(user_id):
+    for game in current_games:
+        for player in game.players:
+            if player.user_id == user_id:
+                return game
+    return None
+
+@bot.tree.command(name="propose_team")
+async def propose_team_command(interaction: discord.Interaction, team: str):
+    user_ig = get_user_ig(interaction.user.id)
+
+    if user_ig is None:
+        await interaction.response.send_message("You are not playing", ephemeral=True)
+        return
+    if not user_ig.teamleader:
+        await interaction.response.send_message("You are not the team leader", ephemeral=True)
+        return
+    game = get_user_game(interaction.user.id)
+    if game is None:
+        await interaction.response.send_message("You are not in a game", ephemeral=True)
+        return
+
+    members = []
+    for word in team.split():
+        if word.startswith("<@") and word.endswith(">"):
+            user_id = int(word.strip("<@!>"))
+            member = interaction.guild.get_member(user_id)
+            if member:
+                members.append(member)
+
+    if len(members) != game.nb_player_on_mission:
+        await interaction.response.send_message(
+            f"You must mention exactly {game.nb_player_on_mission} players.", ephemeral=True
+        )
+        return
+
+    for member in members:
+        if member.id not in [p.user_id for p in game.players]:
+            await interaction.response.send_message(f"{member.mention} is not a player in this game", ephemeral=True)
+            return
+
+    message = "The team leader <@" + str(interaction.user.id) + "> proposes the team:\n"
+    for member in members:
+        message += f"- <@{member.id}>\n"
+
+    await interaction.response.defer()
+    vote_result = await create_poll(game.channel, message)
+    await interaction.followup.send(f"The vote is now closed, you can check result in <#{game.channel.id}>.", ephemeral=True)
+    if vote_result[0] > vote_result[1]:
+        game.waiting_vote = False
+        game.team_vote_moment = False
+        game.mission_vote_moment = True
+        await game.channel.send(f"The team has been accepted with {vote_result[0]} votes for and {vote_result[1]} against.")
+    else:
+        game.nb_refused_teams += 1
+        await game.channel.send(f"The team has been rejected with {vote_result[0]} votes for and {vote_result[1]} against.")
 
 @bot.tree.command(name="role")
 async def role_command(interaction: discord.Interaction):
