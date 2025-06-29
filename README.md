@@ -188,4 +188,4 @@ resistance_game/
 
 ## License
 
-This project is open source and available under the MIT License.
+This project is licensed under CC BY-NC 4.0
