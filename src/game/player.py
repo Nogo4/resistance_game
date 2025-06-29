@@ -5,3 +5,4 @@ class Player:
         self.user_id = user_id
         self.teamleader = False
         self.role = RoleList.RESISTANT
+        self.vote_mission = False
