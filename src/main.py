@@ -160,6 +160,9 @@ async def propose_team_command(interaction: discord.Interaction, team: str):
         if word.startswith("<@") and word.endswith(">"):
             user_id = int(word.strip("<@!>"))
             member = interaction.guild.get_member(user_id)
+            if member in members:
+                await interaction.response.send_message(f"{member.mention} is already in the team.", ephemeral=True)
+                return
             if member:
                 members.append(member)
 
