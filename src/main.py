@@ -4,6 +4,7 @@ import random
 import math
 from utils import get_token, is_private_message, get_user_ig, create_poll
 from game import Player, RoleList, get_mission_ctx, current_games, current_players
+from game.mission import Mission
 from discord.ext import commands
 
 intents = discord.Intents.default()
@@ -34,6 +35,7 @@ class Game:
         self.waiting_vote = False
         self.mission_vote_moment = False
         self.nb_player_on_mission = 0
+        self.mission = Mission()
         self.need_two_fails_on_mission = False
         self.guild = None
 
@@ -75,6 +77,10 @@ class Game:
         self.team_vote_moment = False
         self.waiting_vote = False
         self.mission_vote_moment = False
+        self.mission.players_list.clear()
+        self.mission.result_list.clear()
+        for player in self.players:
+            player.vote_mission = False
         if reset_team_vote:
             self.nb_refused_teams = 0
 
@@ -98,8 +104,22 @@ class Game:
             await asyncio.sleep(1)
         if self.nb_refused_teams >= 5:
             self.end_of_round(False)
+        self.waiting_vote = True
+        self.mission_vote_moment = True
+        mission_message = await self.channel.send("You have 15 seconds to vote for the mission.\nDo /vote_mission sucess or fail to vote.")
+        for i in range(1, 16):
+            await asyncio.sleep(1)
+            await mission_message.edit(content=f"You have {15 - i} seconds to vote for the mission.\nDo /vote_mission sucess or fail to vote.")
+        await mission_message.edit(content="The vote is now closed.")
+        while len(self.mission.result_list) < len(self.mission.players_list):
+            self.mission.result_list.append("success")
+        nb_fail = self.mission.count_fail()
+        if (self.need_two_fails_on_mission and nb_fail >= 2) or (not self.need_two_fails_on_mission and nb_fail >= 1):
+            self.nb_fails += 1
+            await self.channel.send(f"The mission has failed with {nb_fail} fails.")
         else:
-            self.end_of_round(True)
+            self.nb_success += 1
+            await self.channel.send(f"The mission has succeeded ({nb_fail} fails.)")
 
     async def game_in_progress(self):
         self.init_roles()
@@ -166,9 +186,39 @@ async def propose_team_command(interaction: discord.Interaction, team: str):
         game.team_vote_moment = False
         game.mission_vote_moment = True
         await game.channel.send(f"The team has been accepted with {vote_result[0]} votes for and {vote_result[1]} against.")
+        for member in members:
+            member_ig = get_user_ig(member.id)
+            game.mission.add_player(member_ig)
     else:
         game.nb_refused_teams += 1
         await game.channel.send(f"The team has been rejected with {vote_result[0]} votes for and {vote_result[1]} against.")
+
+@bot.tree.command(name="vote_mission")
+async def vote_mission_command(interaction: discord.Interaction, vote: str):
+    user_ig = get_user_ig(interaction.user.id)
+
+    if user_ig is None:
+        await interaction.response.send_message("You are not playing 1", ephemeral=True)
+        return
+    game = get_user_game(interaction.user.id)
+    if game is None:
+        await interaction.response.send_message("You are not in a game 2", ephemeral=True)
+        return
+    if user_ig.user_id not in [p.user_id for p in game.mission.players_list]:
+        await interaction.response.send_message("You are not in the mission", ephemeral=True)
+        return
+    if not user_ig.vote_mission:
+        await interaction.response.send_message("You already vote for this mission", ephemeral=True)
+        return
+    vote_lower = vote.lower()
+    if vote_lower.lower() not in ["success", "fail"]:
+        await interaction.response.send_message("You must vote 'success' or 'fail'", ephemeral=True)
+        return
+    if vote_lower == "fail" and user_ig.role == RoleList.RESISTANT:
+        await interaction.response.send_message("You cannot vote 'fail' as a Resistant", ephemeral=True)
+        return
+    game.mission.add_vote(user_ig, vote_lower)
+    await interaction.response.send_message(f"You voted {vote_lower} for the mission.", ephemeral=True)
 
 @bot.tree.command(name="role")
 async def role_command(interaction: discord.Interaction):
