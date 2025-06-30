@@ -78,7 +78,7 @@ The Resistance is a social deduction game for 5-10 players. Players are secretly
 
 ### Starting a Game
 
-1. Use the command `!play_resistance` in any text channel
+1. Use the command `/play_resistance` in any text channel
 2. Players have 10 seconds to react with 👍 to join the game
 3. The bot will create a private channel for the game participants
 4. Roles are automatically assigned (Resistance members and Spies)
@@ -94,14 +94,12 @@ The Resistance is a social deduction game for 5-10 players. Players are secretly
 ## Commands
 
 ### Slash Commands
-
+- `/commands` - Show all commands
+- `/play_resistance` - Start a new game in the current channel
 - `/propose_team <@player1> <@player2> ...` - **(Team Leader Only)** Propose a team for the current mission
 - `/vote_mission <success|fail>` - **(Mission Members Only)** Vote on the mission outcome
-- `/role` - Check your assigned role (Spy or Resistance)
-
-### Text Commands
-
-- `!play_resistance` - Start a new game in the current channel
+- `/role` - Check your assigned role (Spy or Resistance), and teamate(s) if you are a Spy
+- `/left_game` - Left the current game and finish it
 
 ## Game Rules
 
