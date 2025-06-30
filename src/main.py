@@ -364,7 +364,7 @@ async def commands_command(interaction: discord.Interaction):
         "/left_game: Leave the current game.\n"
         "/propose_team <@user1> <@user2> ...: Propose a team for the mission.\n"
         "/vote_mission success|fail: Vote for the mission.\n"
-        "/role: Check your role in the game."
+        "/role: Check your role in the game.\n"
         "/rules: Display the rules of The Resistance.\n"
     )
     await interaction.response.send_message(message, ephemeral=True)
