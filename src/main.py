@@ -271,9 +271,17 @@ async def role_command(interaction: discord.Interaction):
     if user_ig is None:
         await interaction.response.send_message("You are not playing", ephemeral=True)
         return
+    game = get_user_game(interaction.user.id)
+    if game is None:
+        await interaction.response.send_message("You are not in a game", ephemeral=True)
+        return
     user_role = user_ig.role
     if user_role == RoleList.SPY:
         message = "You are a Spy :detective:"
+        message += "\nTeamate(s) : \n"
+        for player in game.players:
+            if player.role == RoleList.SPY and player.user_id != user_ig.user_id:
+                message += f"- <@{player.user_id}>\n"
     else:
         message = "You are a Resistant :shield:"
     await interaction.response.send_message(message, ephemeral=True)
