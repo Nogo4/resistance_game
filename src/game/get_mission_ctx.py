@@ -39,8 +39,6 @@ def get_nb_player_on_mission(nb_player: int, round: int):
             return 4
         else:
             return 5
-    if nb_player == 2:
-        return 2
     return -1
 
 def need_two_fails(nb_player: int, round: int):

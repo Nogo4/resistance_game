@@ -52,7 +52,11 @@ class Game:
             return True
         return False
 
-    async def init_game(self):
+    async def init_game(self, lobby_channel):
+        if len(self.players) < 5:
+            await lobby_channel.send("Not enough players to start the game (minimum 5 players).")
+            await self.end_game(False)
+            return
         guild = self.guild
         overwrites = {
             guild.default_role: discord.PermissionOverwrite(view_channel=False)
@@ -93,7 +97,10 @@ class Game:
         for player in self.players:
             current_players.remove(player.user_id)
         current_games.remove(self)
-        await self.channel.delete()
+        try:
+            await self.channel.delete()
+        except:
+            pass
 
     async def procede_round(self):
         mission_ctx = get_mission_ctx(len(self.players), self.round, self.players, self.current_leader)
@@ -321,7 +328,7 @@ async def play_resistance(interaction: discord.Interaction):
                 await interaction.channel.send(message)
                 new_game.guild = interaction.guild
                 current_games.append(new_game)
-                await new_game.init_game()
+                await new_game.init_game(interaction.channel)
             else:
                 await interaction.response.send_message("❌ Nobody want play.", ephemeral=False)
             return
