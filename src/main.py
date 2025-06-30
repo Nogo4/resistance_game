@@ -294,18 +294,19 @@ async def on_message(message):
         return
     await bot.process_commands(message)
 
-@bot.command()
-async def play_resistance(ctx):
-    message = await ctx.send(
-        "Hey <@" + str(ctx.author.id) + ">'s game will start soon, all players who want to play have to react with 👍 to join the game\n"
+@bot.tree.command(name="play_resistance")
+async def play_resistance(interaction: discord.Interaction):
+    message = await interaction.channel.send(
+        "Hey <@" + str(interaction.user.id) + ">'s game will start soon, all players who want to play have to react with 👍 to join the game\n"
         "You have 10 seconds to react."
     )
     await message.add_reaction("👍")
+    await interaction.response.send_message("Now, players can join your game !", ephemeral=True)
     await asyncio.sleep(10)
 
-    message = await ctx.channel.fetch_message(message.id)
+    message = await interaction.channel.fetch_message(message.id)
     new_game = Game()
-    new_game.creator = ctx.author.id
+    new_game.creator = interaction.user.id
     for reaction in message.reactions:
         if str(reaction.emoji) == "👍":
             users = [user async for user in reaction.users()]
@@ -317,14 +318,14 @@ async def play_resistance(ctx):
                 message = f"🗳️Players list : \n"
                 for player in new_game.players:
                     message += f"- <@{player.user_id}>\n"
-                await ctx.send(message)
-                new_game.guild = ctx.guild
+                await interaction.channel.send(message)
+                new_game.guild = interaction.guild
                 current_games.append(new_game)
                 await new_game.init_game()
             else:
-                await ctx.send("❌ Nobody want play.")
+                await interaction.response.send_message("❌ Nobody want play.", ephemeral=False)
             return
-    await ctx.send("❌ La réaction 👍 n'a pas été trouvée.")
+    await interaction.channel.send("❌ La réaction 👍 n'a pas été trouvée.")
 
 @bot.event
 async def on_ready():
