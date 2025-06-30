@@ -88,7 +88,7 @@ class Game:
         if someone_left:
             message = "The game has been ended because a player left."
             await self.channel.send(message)
-            asyncio.sleep(5)
+            await asyncio.sleep(5)
         self.status = GameStatus.FINISHED
         for player in self.players:
             current_players.remove(player.user_id)
@@ -107,7 +107,7 @@ class Game:
         if self.round > 1:
             message += f"Number of success : {self.nb_success}:fire:, number of failure : {self.nb_fails} :x:\n"
         if self.need_two_fails_on_mission:
-            message += "Two fails are needed on this mission for spys :detective:.\n"
+            message += "2 fails are needed on this mission for spys :detective:.\n"
         else:
             message += "One fail is needed on this mission for spys :detective:.\n"
         await self.channel.send(message)
@@ -179,9 +179,8 @@ async def left_game_command(interaction: discord.Interaction):
     if game is None:
         await interaction.response.send_message("You are not in a game", ephemeral=True)
         return
-    await interaction.response.defer()
-    game.end_game(True)
-    await interaction.followup.send("You have left the game.", ephemeral=True)
+    await interaction.response.send_message("You will left game in a few seconds", ephemeral=True)
+    await game.end_game(True)
 
 @bot.tree.command(name="propose_team")
 async def propose_team_command(interaction: discord.Interaction, team: str):
