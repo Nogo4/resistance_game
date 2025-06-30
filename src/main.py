@@ -84,6 +84,17 @@ class Game:
         if reset_team_vote:
             self.nb_refused_teams = 0
 
+    async def end_game(self, someone_left: bool):
+        if someone_left:
+            message = "The game has been ended because a player left."
+            await self.channel.send(message)
+            asyncio.sleep(5)
+        self.status = GameStatus.FINISHED
+        for player in self.players:
+            current_players.remove(player.user_id)
+        current_games.remove(self)
+        await self.channel.delete()
+
     async def procede_round(self):
         mission_ctx = get_mission_ctx(len(self.players), self.round, self.players, self.current_leader)
         self.nb_player_on_mission = mission_ctx[0]
@@ -91,8 +102,10 @@ class Game:
         self.current_leader = mission_ctx[2]
         self.players[self.current_leader].teamleader = True
         team_leader = self.players[self.current_leader]
-        message = f"Round {self.round}:\nThe Team leader is <@{team_leader.user_id}>\nThe Team leader must create a team of {self.nb_player_on_mission} members.\n"
+        message = f"# Round {self.round}:\nThe Team leader is <@{team_leader.user_id}>\nThe Team leader must create a team of {self.nb_player_on_mission} members.\n"
 
+        if self.round > 1:
+            message += f"Number of success : {self.nb_success}:fire:, number of failure : {self.nb_fails} :x:\n"
         if self.need_two_fails_on_mission:
             message += "Two fails are needed on this mission for spys :detective:.\n"
         else:
@@ -106,10 +119,10 @@ class Game:
             self.end_of_round(False)
         self.waiting_vote = True
         self.mission_vote_moment = True
-        mission_message = await self.channel.send("You have 15 seconds to vote for the mission.\nDo /vote_mission sucess or fail to vote.")
+        mission_message = await self.channel.send("You have 15 seconds to vote for the mission.\nDo /vote_mission success or fail to vote.")
         for i in range(1, 16):
             await asyncio.sleep(1)
-            await mission_message.edit(content=f"You have {15 - i} seconds to vote for the mission.\nDo /vote_mission sucess or fail to vote.")
+            await mission_message.edit(content=f"You have {15 - i} seconds to vote for the mission.\nDo /vote_mission success or fail to vote.")
         await mission_message.edit(content="The vote is now closed.")
         while len(self.mission.result_list) < len(self.mission.players_list):
             self.mission.result_list.append("success")
@@ -120,12 +133,27 @@ class Game:
         else:
             self.nb_success += 1
             await self.channel.send(f"The mission has succeeded ({nb_fail} fails.)")
+        self.end_of_round(True)
 
     async def game_in_progress(self):
         self.init_roles()
-        while self.round <= 5 and self.nb_fails < 3 and self.nb_success < 3:
+        while self.round <= 5 and self.nb_fails < 3 and self.nb_success < 3 and self.nb_refused_teams < 5:
             await self.procede_round()
             self.round += 1
+        if self.nb_fails >= 3 or self.nb_refused_teams == 5:
+            message = "The Spies have won the game! :detective:\nTeam of Spies:\n"
+            for player in self.players:
+                if player.role == RoleList.SPY:
+                    message += f"- <@{player.user_id}>\n"
+        if self.nb_success >= 3:
+            message = "The Resistance has won the game! :shield:\nTeam of Resistance:\n"
+            for player in self.players:
+                if player.role == RoleList.RESISTANT:
+                    message += f"- <@{player.user_id}>\n"
+        message += "\n/left_game to left the game and could join another or stand 15 seconds for the end game."
+        await self.channel.send(message)
+        await asyncio.sleep(15)
+        await self.end_game(False)
 
     def init_roles(self):
         nb_spy = math.ceil(len(self.players) / 3)
@@ -139,6 +167,21 @@ def get_user_game(user_id):
             if player.user_id == user_id:
                 return game
     return None
+
+@bot.tree.command(name="left_game")
+async def left_game_command(interaction: discord.Interaction):
+    user_ig = get_user_ig(interaction.user.id)
+
+    if user_ig is None:
+        await interaction.response.send_message("You are not playing", ephemeral=True)
+        return
+    game = get_user_game(interaction.user.id)
+    if game is None:
+        await interaction.response.send_message("You are not in a game", ephemeral=True)
+        return
+    await interaction.response.defer()
+    game.end_game(True)
+    await interaction.followup.send("You have left the game.", ephemeral=True)
 
 @bot.tree.command(name="propose_team")
 async def propose_team_command(interaction: discord.Interaction, team: str):

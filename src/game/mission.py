@@ -29,4 +29,3 @@ class Mission:
             if result == "fail":
                 nb_fail += 1
         return nb_fail
-
