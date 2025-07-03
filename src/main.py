@@ -143,7 +143,7 @@ class Game:
         self.end_of_round(True)
 
     async def game_in_progress(self):
-        self.init_roles()
+        await self.init_roles()
         while self.round <= 5 and self.nb_fails < 3 and self.nb_success < 3 and self.nb_refused_teams < 5:
             await self.procede_round()
             self.round += 1
@@ -162,11 +162,13 @@ class Game:
         await asyncio.sleep(15)
         await self.end_game(False)
 
-    def init_roles(self):
-        nb_spy = math.ceil(len(self.players) / 3)
+    async def init_roles(self):
+        nb_players = len(self.players)
+        nb_spy = math.ceil(nb_players / 3)
         for spy in range(nb_spy):
             player = random.choice(self.players)
             player.role = RoleList.SPY
+        await self.channel.send(f"Roles have been assigned. Use /role to check your role.\nThere are {nb_spy} Spies and {nb_players - nb_spy} Resistants.\n")
 
 def get_user_game(user_id):
     for game in current_games:
