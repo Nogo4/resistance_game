@@ -177,12 +177,9 @@ resistance_game/
 
 ## Future Enhancements
 
+- [ ] Inventory in game
 - [ ] Database integration for game persistence
 - [ ] Spectator mode
-- [ ] Game statistics and leaderboards
-- [ ] Custom game settings (timer duration, player limits)
-- [ ] Better error handling and user feedback
-- [ ] Game replay system
 
 ## License
 
