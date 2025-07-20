@@ -2,7 +2,7 @@ import discord
 import asyncio
 import random
 import math
-from utils import get_token, is_private_message, get_user_ig, create_poll
+from utils import get_token, is_private_message, get_user_ig, create_poll, load_txt_file
 from game import Player, RoleList, get_mission_ctx, current_games, current_players
 from game.mission import Mission
 from discord.ext import commands
@@ -12,6 +12,9 @@ intents.message_content = True
 intents.reactions = True
 intents.guilds = True
 intents.members = True
+patch_note = load_txt_file("patch_note.txt")
+rules = load_txt_file("rules.txt")
+commands_list = load_txt_file("commands.txt")
 
 bot = commands.Bot(command_prefix="!", intents=intents)
 
@@ -337,38 +340,17 @@ async def play_resistance(interaction: discord.Interaction):
 
 @bot.tree.command(name="rules")
 async def rules_command(interaction: discord.Interaction):
-    rules = (
-        "# Here are the rules of The Resistance:\n"
-        "Basic rules:\n"
-        "- 1. The game is played with 5 to 10 players.\n"
-        "- 2. Each player is assigned a role: either a Spy or a Resistant.\n"
-        "- 3. The game consists of 5 rounds.\n"
-        "- 4. In each round, a team leader proposes a team for the mission.\n"
-        "- 5. All players vote on whether to accept the proposed team.\n"
-        "- 6. If the team is accepted, the mission is carried out.\n"
-        "- 7. Players on the mission vote for success or fail.\n"
-        "- 8. The game ends when either the Spies or the Resistance win. (the first to reach 3 successes or 3 fails)\n"
-        "Detailed rules:\n"
-        "- 1. For spy players, when you are on a mission, you just need 1 fail to fail the mission (unless the mission requires 2 fails, and it will be indicated at the beginning of the round).\n"
-        "- 2. For resistant players, you must always vote success on a mission, if you vote fail, you will be averted you can't\n"
-        "- 3. The team leader is chosen (automatic) at the beginning of the game and rotates each round.\n"
-        "- 4. If the team is rejected 5 times in a row, the Spies win.\n"
-        "- 5. If a player leaves the game, the game ends and all players can"
-    )
+    global rules
+    if rules is None:
+        rules = "The bot's owner has not set the rules yet."
     await interaction.response.send_message(rules, ephemeral=True)
 
 @bot.tree.command(name="commands")
 async def commands_command(interaction: discord.Interaction):
-    message = (
-        "Here are the commands available:\n"
-        "/play_resistance: Start a new game of The Resistance.\n"
-        "/left_game: Leave the current game.\n"
-        "/propose_team <@user1> <@user2> ...: Propose a team for the mission.\n"
-        "/vote_mission success|fail: Vote for the mission.\n"
-        "/role: Check your role in the game.\n"
-        "/rules: Display the rules of The Resistance.\n"
-    )
-    await interaction.response.send_message(message, ephemeral=True)
+    global commands_list
+    if commands_list is None:
+        commands_list = "The bot's owner has not set the commands yet."
+    await interaction.response.send_message(commands_list, ephemeral=True)
 
 @bot.event
 async def on_ready():
