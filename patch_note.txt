@@ -1,0 +1,11 @@
+# Patch Notes v1.1
+
+## New: `/patch_note` Command
+
+### Description:
+You can now use the `/patch_note` command to view the latest patch notes directly in-game!
+
+## Bug Fixes
+- Fixed a bug where players could create a lobby while already in a game  
+- Fixed a crash when trying to leave a game multiple times  
+- Corrected several English language errors

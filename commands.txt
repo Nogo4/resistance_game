@@ -1,0 +1,9 @@
+# Available Commands
+
+- `/play_resistance` — Start a new game of *The Resistance*.  
+- `/leave_game` — Leave the current game.  
+- `/propose_team <@user1> <@user2> ...` — Propose a team for the mission.  
+- `/vote_mission success|fail` — Vote on the mission outcome.  
+- `/role` — Check your role in the game.  
+- `/rules` — Display the rules of *The Resistance*.
+- `/patch_note` — Display the latest patch note.

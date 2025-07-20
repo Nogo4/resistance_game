@@ -1,0 +1,18 @@
+# Here are the rules of The Resistance:
+
+## Basic Rules:
+- 1. The game is played with 5 to 10 players.  
+- 2. Each player is assigned a role: either a Spy or a Resistance member.  
+- 3. The game consists of 5 rounds.  
+- 4. In each round, a team leader proposes a team for the mission.  
+- 5. All players vote on whether to accept the proposed team.  
+- 6. If the team is accepted, the mission is carried out.  
+- 7. Players on the mission vote for success or failure.  
+- 8. The game ends when either the Spies or the Resistance win (whichever side gets 3 successful missions or 3 failed missions first).  
+
+## Detailed Rules:
+- 1. For Spies: during a mission, only one "fail" vote is needed to fail the mission — unless the mission specifically requires two fails (this will be indicated at the start of the round).  
+- 2. For Resistance members: you must always vote "success" on a mission. If you vote "fail", you will be warned that you cannot do that.  
+- 3. The team leader is automatically chosen at the start of the game and changes each round.  
+- 4. If the proposed team is rejected 5 times in a row, the Spies win the game.  
+- 5. If a player leaves the game, the game ends and all players are returned to the lobby.  
