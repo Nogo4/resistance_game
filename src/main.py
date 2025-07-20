@@ -180,7 +180,7 @@ def get_user_game(user_id):
                 return game
     return None
 
-@bot.tree.command(name="left_game")
+@bot.tree.command(name="leave_game")
 async def left_game_command(interaction: discord.Interaction):
     user_ig = get_user_ig(interaction.user.id)
 
