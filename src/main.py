@@ -351,14 +351,14 @@ async def rules_command(interaction: discord.Interaction):
         rules = "The bot's owner has not set the rules yet."
     await interaction.response.send_message(rules, ephemeral=True)
 
-@bot.tree.command(name="commands")
+@bot.tree.command(name="patch_note")
 async def commands_command(interaction: discord.Interaction):
     global patch_note
     if patch_note is None:
         patch_note = "The bot's owner has not set the patch note yet."
     await interaction.response.send_message(patch_note, ephemeral=True)
 
-@bot.tree.command(name="patch_note")
+@bot.tree.command(name="commands")
 async def commands_command(interaction: discord.Interaction):
     global commands_list
     if commands_list is None:
