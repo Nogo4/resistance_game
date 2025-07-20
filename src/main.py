@@ -184,15 +184,18 @@ def get_user_game(user_id):
 async def left_game_command(interaction: discord.Interaction):
     user_ig = get_user_ig(interaction.user.id)
 
-    if user_ig is None:
-        await interaction.response.send_message("You are not playing", ephemeral=True)
-        return
-    game = get_user_game(interaction.user.id)
-    if game is None:
-        await interaction.response.send_message("You are not in a game", ephemeral=True)
-        return
-    await interaction.response.send_message("You will left game in a few seconds", ephemeral=True)
-    await game.end_game(True)
+    try:
+        if user_ig is None:
+            await interaction.response.send_message("You are not playing", ephemeral=True)
+            return
+        game = get_user_game(interaction.user.id)
+        if game is None:
+            await interaction.response.send_message("You are not in a game", ephemeral=True)
+            return
+        await interaction.response.send_message("You will left game in a few seconds", ephemeral=True)
+        await game.end_game(True)
+    except:
+        None
 
 @bot.tree.command(name="propose_team")
 async def propose_team_command(interaction: discord.Interaction, team: str):
