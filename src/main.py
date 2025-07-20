@@ -311,6 +311,9 @@ async def on_message(message):
 
 @bot.tree.command(name="play_resistance")
 async def play_resistance(interaction: discord.Interaction):
+    if interaction.user.id in current_players:
+        await interaction.response.send_message("You are already playing a game.", ephemeral=True)
+        return
     message = await interaction.channel.send(
         "Hey <@" + str(interaction.user.id) + ">'s game will start soon, all players who want to play have to react with 👍 to join the game\n"
         "You have 10 seconds to react."
