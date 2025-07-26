@@ -160,7 +160,7 @@ class Game:
             for player in self.players:
                 if player.role == RoleList.RESISTANT:
                     message += f"- <@{player.user_id}>\n"
-        message += "\n/left_game to left the game and could join another or stand 15 seconds for the end game."
+        message += "\n/left_game to leave the game and join another, or wait 15 seconds for the game to end."
         await self.channel.send(message)
         await asyncio.sleep(15)
         await self.end_game(False)
@@ -192,7 +192,7 @@ async def left_game_command(interaction: discord.Interaction):
         if game is None:
             await interaction.response.send_message("You are not in a game", ephemeral=True)
             return
-        await interaction.response.send_message("You will left game in a few seconds", ephemeral=True)
+        await interaction.response.send_message("You will leave the game in a few seconds", ephemeral=True)
         await game.end_game(True)
     except:
         None
