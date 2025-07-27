@@ -341,7 +341,7 @@ async def play_resistance(interaction: discord.Interaction):
                 current_games.append(new_game)
                 await new_game.init_game(interaction.channel)
             else:
-                await interaction.channel.send("❌ Nobody want play.")
+                await interaction.channel.send("❌ Nobody wants to play.")
             return
 
 @bot.tree.command(name="rules")
