@@ -2,7 +2,7 @@ import discord
 import asyncio
 import random
 import math
-from utils import get_token, is_private_message, get_user_ig, create_poll, load_txt_file
+from utils import get_token, is_private_message, create_poll, load_txt_file
 from game import Player, RoleList, get_mission_ctx, current_games, current_players
 from game.mission import Mission
 from discord.ext import commands
@@ -17,6 +17,15 @@ rules = load_txt_file("rules.txt")
 commands_list = load_txt_file("commands.txt")
 
 bot = commands.Bot(command_prefix="!", intents=intents)
+
+def get_user_ig(user_id: int):
+    if user_id not in current_players:
+        return None
+    for game in current_games:
+        for player in game.players:
+            if player.user_id == user_id:
+                return player
+    return None
 
 class GameStatus:
     WAITING_FOR_PLAYERS = 1
@@ -56,7 +65,7 @@ class Game:
         return False
 
     async def init_game(self, lobby_channel):
-        if len(self.players) < 5:
+        if len(self.players) < 1:
             await lobby_channel.send("Not enough players to start the game (minimum 5 players).")
             await self.end_game(False)
             return
